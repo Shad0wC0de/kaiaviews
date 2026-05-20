@@ -1,4 +1,4 @@
-# BINI Video Search — GitHub Setup Guide
+# KAIA Video Search — GitHub Setup Guide
 
 ## What you'll end up with
 A free public website (e.g. `https://yourusername.github.io/bini-search/`) that
