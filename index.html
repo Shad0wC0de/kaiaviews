@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KAIA Video Search</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c27;
+    --border: #2a2a3a;
+    --pink: #ff3e8a;
+    --pink-dim: #c42d67;
+    --cyan: #00e5ff;
+    --text: #e8e8f0;
+    --muted: #7a7a9a;
+    --radius: 10px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,62,138,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,62,138,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+
+  /* Header */
+  header {
+    padding: 48px 0 36px;
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+  }
+
+  .logo-block h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 8vw, 80px);
+    letter-spacing: 4px;
+    line-height: 1;
+    background: linear-gradient(135deg, #fff 30%, var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo-block p {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .stats-badge {
+    margin-left: auto;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .stats-badge span {
+    color: var(--cyan);
+    font-weight: 600;
+  }
+
+  /* Search panel */
+  .search-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 28px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 14px;
+    align-items: end;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .field input, .field select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .field input:focus, .field select:focus {
+    border-color: var(--pink);
+  }
+
+  .field select option { background: var(--surface); }
+
+  .date-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .date-row .field { gap: 6px; }
+
+  /* Search button */
+  .btn-search {
+    background: var(--pink);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    padding: 10px 28px;
+    transition: background 0.2s, transform 0.1s;
+    white-space: nowrap;
+    align-self: end;
+  }
+
+  .btn-search:hover { background: #ff5fa0; transform: translateY(-1px); }
+  .btn-search:active { transform: translateY(0); }
+
+  .btn-reset {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 10px 16px;
+    transition: border-color 0.2s, color 0.2s;
+    white-space: nowrap;
+    align-self: end;
+  }
+  .btn-reset:hover { border-color: var(--pink); color: var(--text); }
+
+  .search-actions { display: flex; gap: 8px; }
+
+  /* Results bar */
+  .results-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .results-bar strong { color: var(--text); }
+
+  .sort-select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 6px 12px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  /* Table */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  thead tr {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+  }
+
+  thead th:hover { color: var(--pink); }
+  thead th.sorted { color: var(--pink); }
+  thead th .sort-arrow { margin-left: 4px; opacity: 0.6; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+
+  tbody td {
+    padding: 12px 16px;
+    vertical-align: middle;
+  }
+
+  .td-title {
+    max-width: 380px;
+  }
+
+  .td-title a {
+    color: var(--text);
+    text-decoration: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+    transition: color 0.2s;
+  }
+
+  .td-title a:hover { color: var(--pink); }
+
+  .td-date { color: var(--muted); white-space: nowrap; font-size: 13px; }
+
+  .td-views {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+
+  .view-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .view-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    width: 80px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .view-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--pink), var(--cyan));
+  }
+
+  .yt-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 10px;
+    transition: border-color 0.2s, color 0.2s;
+    white-space: nowrap;
+  }
+
+  .yt-link:hover { border-color: #ff0000; color: #ff4444; }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: 28px;
+  }
+
+  .page-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    min-width: 36px;
+    padding: 7px 12px;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+
+  .page-btn:hover:not(:disabled) { border-color: var(--pink); color: var(--pink); }
+  .page-btn.active { background: var(--pink); border-color: var(--pink); color: #fff; font-weight: 600; }
+  .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .page-info { color: var(--muted); font-size: 13px; padding: 0 8px; }
+
+  /* Loading / empty */
+  .status-box {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .status-box .icon { font-size: 40px; margin-bottom: 12px; }
+  .status-box p { font-size: 15px; }
+  .status-box small { font-size: 12px; display: block; margin-top: 6px; opacity: 0.6; }
+
+  .loader {
+    display: inline-block;
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--pink);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-bottom: 12px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .search-panel { grid-template-columns: 1fr 1fr; }
+    .search-actions { grid-column: 1 / -1; }
+    header { flex-wrap: wrap; }
+    .stats-badge { margin-left: 0; }
+  }
+
+  @media (max-width: 500px) {
+    .search-panel { grid-template-columns: 1fr; }
+    .date-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo-block">
+      <h1>KAIA</h1>
+      <p>YouTube Video Archive Search</p>
+    </div>
+    
+    <div class="stats-badge">
+      <span id="total-count">—</span> videos indexed &nbsp;·&nbsp; Data as of <span id="fetch-date">—</span>
+    </div>
+  </header>
+
+  <div class="search-panel">
+    <div class="field" style="grid-column: span 2;">
+      <label>Search Title</label>
+      <input type="text" id="q-title" placeholder="e.g. Na Na Na, Pantropiko…" />
+    </div>
+
+    <div class="field">
+      <label>Min Views</label>
+      <input type="number" id="q-min-views" placeholder="e.g. 1000000" min="0" />
+    </div>
+
+    <div class="field">
+      <label>Max Views</label>
+      <input type="number" id="q-max-views" placeholder="e.g. 50000000" min="0" />
+    </div>
+
+    <div class="field date-row" style="grid-column: span 2;">
+      <div class="field">
+        <label>From Date</label>
+        <input type="date" id="q-date-from" />
+      </div>
+      <div class="field">
+        <label>To Date</label>
+        <input type="date" id="q-date-to" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Limit</label>
+      <select id="q-limit">
+        <option value="25">25</option>
+        <option value="50" selected>50</option>
+        <option value="100">100</option>
+        <option value="250">250</option>
+      </select>
+    </div>
+
+    <div class="search-actions">
+      <button class="btn-search" id="btn-search">SEARCH</button>
+      <button class="btn-reset" id="btn-reset">Reset</button>
+    </div>
+  </div>
+
+  <div class="results-bar">
+    <div id="results-label">Enter a search or press Search to browse all videos.</div>
+    <select class="sort-select" id="sort-select">
+      <option value="date-desc">Newest First</option>
+      <option value="date-asc">Oldest First</option>
+      <option value="views-desc">Most Viewed</option>
+      <option value="views-asc">Least Viewed</option>
+      <option value="title-asc">Title A–Z</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-col="title">Video Title <span class="sort-arrow">↕</span></th>
+          <th data-col="date">Post Date <span class="sort-arrow">↕</span></th>
+          <th data-col="views">View Count <span class="sort-arrow">↕</span></th>
+          <th>Link</th>
+        </tr>
+      </thead>
+      <tbody id="results-body"></tbody>
+    </table>
+    <div id="status-area" class="status-box">
+      <div class="loader"></div>
+      <p>Loading video data…</p>
+      <small id="load-status">Fetching CSV files…</small>
+    </div>
+  </div>
+
+  <div class="pagination" id="pagination"></div>
+
+</div>
+
+<script>
+// ============================================================
+// CONFIGURATION — update YOUR_USERNAME and YOUR_REPO_NAME
+// ============================================================
+const GITHUB_USER = "Shad0wC0de";
+const GITHUB_REPO = "kaiaviews";
+const BRANCH = "main";
+const NUM_FILES = 11; // number of "video metadata N.csv" files
+
+// Build raw URLs
+const CSV_URLS = Array.from({length: NUM_FILES}, (_, i) =>
+  `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/video%20metadata%20${i+1}.csv`
+);
+// ============================================================
+
+let allVideos = [];
+let filtered = [];
+let maxViews = 1;
+let currentPage = 1;
+let pageSize = 50;
+
+// --- CSV parser (handles quoted fields) ---
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  return lines.slice(1).map(line => {
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cur); cur = ''; }
+      else { cur += c; }
+    }
+    cols.push(cur);
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (cols[i] || '').trim());
+    return obj;
+  });
+}
+
+function fmtViews(n) {
+  if (n >= 1e9) return (n/1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+  return n.toLocaleString();
+}
+
+// --- Load all CSVs ---
+async function loadAll() {
+  const statusEl = document.getElementById('load-status');
+  const results = [];
+  let loaded = 0;
+
+  await Promise.all(CSV_URLS.map(async (url, i) => {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      const rows = parseCSV(text);
+      rows.forEach(r => results.push(r));
+      loaded++;
+      statusEl.textContent = `Loaded ${loaded} of ${NUM_FILES} files…`;
+    } catch (e) {
+      loaded++;
+      statusEl.textContent = `Loaded ${loaded} of ${NUM_FILES} files (file ${i+1} skipped)…`;
+    }
+  }));
+
+  allVideos = results.map(r => ({
+    title: r['Video Title'] || '',
+    date: r['Video Post Date'] || '',
+    url: r['Video URL'] || '',
+    views: parseInt(r['Video Play Count']) || 0,
+  }));
+
+  maxViews = Math.max(...allVideos.map(v => v.views), 1);
+  document.getElementById('total-count').textContent = allVideos.length.toLocaleString();
+  document.getElementById('fetch-date').textContent = new Date().toLocaleString('en-PH', {timeZone:'Asia/Manila', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:true});
+  document.getElementById('status-area').style.display = 'none';
+  doSearch();
+}
+
+// --- Search & filter ---
+function doSearch() {
+  const q = document.getElementById('q-title').value.trim().toLowerCase();
+  const minV = parseInt(document.getElementById('q-min-views').value) || 0;
+  const maxV = parseInt(document.getElementById('q-max-views').value) || Infinity;
+  const dateFrom = document.getElementById('q-date-from').value;
+  const dateTo = document.getElementById('q-date-to').value;
+  pageSize = parseInt(document.getElementById('q-limit').value);
+
+  filtered = allVideos.filter(v => {
+    if (q && !v.title.toLowerCase().includes(q)) return false;
+    if (v.views < minV || v.views > maxV) return false;
+    if (dateFrom && v.date < dateFrom) return false;
+    if (dateTo && v.date > dateTo) return false;
+    return true;
+  });
+
+  sortResults();
+  currentPage = 1;
+  renderTable();
+}
+
+function sortResults() {
+  const s = document.getElementById('sort-select').value;
+  filtered.sort((a, b) => {
+    if (s === 'date-desc') return b.date.localeCompare(a.date);
+    if (s === 'date-asc') return a.date.localeCompare(b.date);
+    if (s === 'views-desc') return b.views - a.views;
+    if (s === 'views-asc') return a.views - b.views;
+    if (s === 'title-asc') return a.title.localeCompare(b.title);
+    return 0;
+  });
+}
+
+function renderTable() {
+  const tbody = document.getElementById('results-body');
+  const label = document.getElementById('results-label');
+  const start = (currentPage - 1) * pageSize;
+  const page = filtered.slice(start, start + pageSize);
+
+  label.innerHTML = `Showing <strong>${start+1}–${Math.min(start+pageSize, filtered.length)}</strong> of <strong>${filtered.length.toLocaleString()}</strong> results`;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    document.getElementById('status-area').style.display = 'block';
+    document.getElementById('status-area').innerHTML = '<div class="icon">🔍</div><p>No videos match your search.</p><small>Try adjusting your filters.</small>';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  document.getElementById('status-area').style.display = 'none';
+
+  tbody.innerHTML = page.map(v => {
+    const pct = Math.round((v.views / maxViews) * 100);
+    const dateDisplay = v.date ? v.date.replace(/-/g, '·') : '—';
+    return `
+      <tr>
+        <td class="td-title"><a href="${v.url}" target="_blank" rel="noopener">${escHtml(v.title)}</a></td>
+        <td class="td-date">${dateDisplay}</td>
+        <td class="td-views">
+          <div class="view-bar-wrap">
+            <span>${fmtViews(v.views)}</span>
+            <div class="view-bar"><div class="view-bar-fill" style="width:${pct}%"></div></div>
+          </div>
+        </td>
+        <td><a class="yt-link" href="${v.url}" target="_blank" rel="noopener">▶ Watch</a></td>
+      </tr>`;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderPagination() {
+  const total = Math.ceil(filtered.length / pageSize);
+  const pag = document.getElementById('pagination');
+  if (total <= 1) { pag.innerHTML = ''; return; }
+
+  let html = `<button class="page-btn" id="prev-btn" ${currentPage===1?'disabled':''}>‹ Prev</button>`;
+
+  const range = [];
+  for (let i = 1; i <= total; i++) {
+    if (i === 1 || i === total || Math.abs(i - currentPage) <= 2) range.push(i);
+    else if (range[range.length-1] !== '…') range.push('…');
+  }
+
+  range.forEach(p => {
+    if (p === '…') {
+      html += `<span class="page-info">…</span>`;
+    } else {
+      html += `<button class="page-btn ${p===currentPage?'active':''}" data-page="${p}">${p}</button>`;
+    }
+  });
+
+  html += `<button class="page-btn" id="next-btn" ${currentPage===total?'disabled':''}>Next ›</button>`;
+  pag.innerHTML = html;
+
+  pag.querySelectorAll('[data-page]').forEach(btn =>
+    btn.addEventListener('click', () => { currentPage = parseInt(btn.dataset.page); renderTable(); window.scrollTo({top:0,behavior:'smooth'}); })
+  );
+  pag.querySelector('#prev-btn')?.addEventListener('click', () => { currentPage--; renderTable(); window.scrollTo({top:0,behavior:'smooth'}); });
+  pag.querySelector('#next-btn')?.addEventListener('click', () => { currentPage++; renderTable(); window.scrollTo({top:0,behavior:'smooth'}); });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.getElementById('btn-search').addEventListener('click', doSearch);
+document.getElementById('btn-reset').addEventListener('click', () => {
+  document.getElementById('q-title').value = '';
+  document.getElementById('q-min-views').value = '';
+  document.getElementById('q-max-views').value = '';
+  document.getElementById('q-date-from').value = '';
+  document.getElementById('q-date-to').value = '';
+  doSearch();
+});
+document.getElementById('sort-select').addEventListener('change', () => { sortResults(); currentPage = 1; renderTable(); });
+document.getElementById('q-title').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+loadAll();
+</script>
+</body>
+</html>
