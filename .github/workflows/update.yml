@@ -27,7 +27,7 @@ jobs:
 
       - name: Run script
         run: |
-          python YT_tracking.py
+          python YT_Tracking.py
 
       - name: Commit changes
         run: |
