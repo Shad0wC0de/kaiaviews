@@ -12,7 +12,8 @@ ydl_opts = {
     'force_generic_extractor': False,
     'skip_download': True,
     'no_warnings': True,   # 👈 ADD THIS
-    'cookiesfrombrowswer': ('firefox')
+#    'cookiesfrombrowswer': ('firefox')
+    'cookiefile': 'cookies.txt'
 }
 
 video_urls = []
@@ -38,7 +39,8 @@ ydl_opts_meta = {
     'quiet': True,
     'skip_download': True,
     'no_warnings': True,   # 👈 ADD THIS
-    'cookiesfrombrowswer': ('firefox')
+#    'cookiesfrombrowswer': ('firefox')
+    'cookiefile': 'cookies.txt'
 }
 
 for i, chunk in enumerate(chunks):
