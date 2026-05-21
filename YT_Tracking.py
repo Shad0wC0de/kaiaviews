@@ -38,9 +38,12 @@ chunks = [video_urls[i * chunk_size:(i + 1) * chunk_size] for i in range(num_chu
 ydl_opts_meta = {
     'quiet': True,
     'skip_download': True,
-    'no_warnings': True,   # 👈 ADD THIS
-#    'cookiesfrombrowswer': ('firefox')
-    'cookiefile': 'cookies.txt'
+    'no_warnings': True,
+    'cookiefile': 'cookies.txt',
+    'extract_flat': False,
+    'format': 'skip',
+    'retries': 5,
+    'fragment_retries': 5
 }
 
 for i, chunk in enumerate(chunks):
